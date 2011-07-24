@@ -1,0 +1,80 @@
+h1. YAML2ENV
+
+_Stash environment-specific configs in YAML-files and load them into ENV according to best-practices pattern - and auto-detects on-initialization if something is missing (skipping the "scratching the head"-part)._
+
+h2. Motivation
+
+For some rainy day...or next commit.
+
+h2. Frameworks
+
+@Yaml2env@ detects lean defaults for: *"Rack":https://github.com/rack/rack*, *"Rails":https://github.com/rails/rails*, and *"Sinatra":https://github.com/sinatra/sinatra*. Though by setting @Yaml2env.env@ and @Yaml2env.root@ manually you are good with any Ruby-project.
+
+h2. Installation
+
+Add to your @Gemfile@:
+
+<pre>
+  gem 'yaml2env'
+</pre>
+
+...and @bundle install@.
+
+h2. Usage
+
+To give this some context; this is how we use @Yaml2Env@ to initialize "Hoptoad":http://hoptoadapp.com:
+
+<pre>
+  Yaml2Env.load 'config/hoptoad.yml', {'HOPTOAD_API_KEY' => 'api_key'}
+
+  if defined?(HoptoadNotifier)
+    HoptoadNotifier.configure do |config|
+      config.api_key = ENV['HOPTOAD_API_KEY']
+    end
+  end
+</pre>
+
+...and the corresponding YAML config file:
+
+<pre>
+  development:
+    api_key: NONE
+
+  staging:
+    api_key: 123abc
+
+  production:
+    api_key: abc123
+
+  test:
+    api_key: NONE
+</pre>
+
+...which will yield:
+
+<pre>
+  Rails.env = 'development'
+  ENV['HOPTOAD_API_KEY'] => 'NONE'
+
+  Rails.env = 'staging'
+  ENV['HOPTOAD_API_KEY'] => '123abc'
+
+  Rails.env = 'production'
+  ENV['HOPTOAD_API_KEY'] => 'abc123'
+
+  Rails.env = 'test'
+  ENV['HOPTOAD_API_KEY'] => 'NONE'
+
+  Rails.env = 'other'
+  => "Failed to load required config for environment 'other': /Users/grimen/development/example.com/config/hoptoad.yml"
+</pre>
+
+h2. Notes
+
+This gem was developed for our own requirements at *"Merchii":http://github.com/merchii*, so feel free to send pull-requests with enhancements of any kind (features, bug-fixes, documentation, tests, etc.) to make it better or useful for you as well.
+
+h2. License
+
+Released under the MIT license.
+Copyright (c) "Merchii":http://github.com/merchii, "Jonas Grimfelt":http://github.com/grimen
+

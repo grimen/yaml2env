@@ -1,0 +1,19 @@
+development:
+  api_key: DEVELOPMENT_KEY
+  api_secret: DEVELOPMENT_SECRET
+
+staging:
+  api_key: STAGING_KEY
+  api_secret: STAGING_SECRET
+
+production:
+  api_key: PRODUCTION_KEY
+  api_secret: PRODUCTION_SECRET
+
+test:
+  api_key: TEST_KEY
+  api_secret: TEST_SECRET
+
+nyan_cat_mode:
+  api_key: NYAN_CAT_MODE_KEY
+  api_secret: NYAN_CAT_MODE_SECRET
