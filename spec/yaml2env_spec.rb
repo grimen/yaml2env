@@ -314,7 +314,7 @@ describe Yaml2env do
       if loaded
         eval <<-EVAL
           unless defined?(::Rails)
-            module Rails
+            module ::Rails
               class << self
                 attr_accessor :root, :env
               end
@@ -332,7 +332,7 @@ describe Yaml2env do
       if loaded
         eval <<-EVAL
         unless defined?(::Sinatra::Application)
-          module Sinatra
+          module ::Sinatra
             class Application
               class << self
                 attr_accessor :root, :environment
