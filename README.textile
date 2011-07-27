@@ -1,6 +1,6 @@
 h1. YAML2ENV
 
-[![Build Status](https://secure.travis-ci.org/merchii/yaml2env.png)](http://travis-ci.org/merchii/yaml2env)
+"!https://secure.travis-ci.org/merchii/yaml2env.png!":http://travis-ci.org/merchii/yaml2env
 
 _Stash environment-specific configs in YAML-files and load them into ENV according to best-practices pattern - and auto-detects on-initialization if something is missing (skipping the "scratching the head"-part)._
 
