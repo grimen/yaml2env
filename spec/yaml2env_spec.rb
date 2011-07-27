@@ -292,7 +292,7 @@ describe Yaml2env do
     end
 
     it 'should set - with Yaml2env - loaded ENV-values' do
-      Yaml2env::LOADED_ENV = {}
+      Yaml2env::LOADED_ENV.clear unless Yaml2env::LOADED_ENV.empty?
       Yaml2env.load 'fixtures/example.yml', {:API_KEY => 'api_key', :API_SECRET => 'api_secret'}
       Yaml2env::LOADED_ENV.must_equal({"API_SECRET" => "PRODUCTION_SECRET", "API_KEY" => "PRODUCTION_KEY"})
     end
