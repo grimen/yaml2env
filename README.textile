@@ -77,4 +77,3 @@ h2. License
 
 Released under the MIT license.
 Copyright (c) "Merchii":http://github.com/merchii, "Jonas Grimfelt":http://github.com/grimen
-
