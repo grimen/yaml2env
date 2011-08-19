@@ -298,6 +298,43 @@ describe Yaml2env do
     end
   end
 
+  describe ".loaded?" do
+    before do
+      Yaml2env::LOADED_ENV.clear unless Yaml2env::LOADED_ENV.empty?
+    end
+
+    it 'should be defined' do
+      Yaml2env.must_respond_to :loaded?
+    end
+
+    describe "one argument" do
+      it 'should return false if specified constant is not loaded into ENV' do
+        Yaml2env.loaded?('API_KEY').must_equal false
+      end
+
+      it 'should return true if specified constant is loaded into ENV' do
+        Yaml2env.load 'fixtures/example.yml', {:API_KEY => 'api_key', :API_SECRET => 'api_secret'}
+        Yaml2env.loaded?('API_KEY').must_equal true
+      end
+    end
+
+    describe "multiple arguments" do
+      it 'should return false if none of the specified constants are not loaded into ENV' do
+        Yaml2env.loaded?('API_KEY', 'API_SECRET').must_equal false
+      end
+
+      it 'should return false if any of the specified constants are not loaded into ENV' do
+        Yaml2env.load 'fixtures/example.yml', {:API_KEY => 'api_key'}
+        Yaml2env.loaded?('API_KEY', 'API_SECRET').must_equal false
+      end
+
+      it 'should return true if all specified constants are loaded into ENV' do
+        Yaml2env.load 'fixtures/example.yml', {:API_KEY => 'api_key', :API_SECRET => 'api_secret'}
+        Yaml2env.loaded?('API_KEY', 'API_SECRET').must_equal true
+      end
+    end
+  end
+
   protected
 
     def rack!(loaded)

@@ -84,6 +84,10 @@ module Yaml2env
       end
     end
 
+    def loaded?(*constant_names)
+      constant_names.all? { |cn| ::Yaml2env::LOADED_ENV.key?(cn.to_s) }
+    end
+
     def detect_root!
       self.root ||= if ::ENV.key?('RACK_ROOT')
         ::ENV['RACK_ROOT']

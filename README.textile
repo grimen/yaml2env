@@ -69,6 +69,21 @@ To give this some context; this is how we use @Yaml2Env@ to initialize "Hoptoad"
   => "Failed to load required config for environment 'other': /Users/grimen/development/example.com/config/hoptoad.yml"
 </pre>
 
+h2. Helpers
+
+A few convenient helpers:
+
+<pre>
+  Yaml2Env.loaded? 'HOPTOAD_API_KEY'
+  => true
+
+  Yaml2Env.loaded? 'BAZOOKA'
+  => false
+
+  Yaml2Env.loaded? 'HOPTOAD_API_KEY', 'BAZOOKA'
+  => false
+</pre>
+
 h2. Notes
 
 This gem was developed for our own requirements at *"Merchii":http://github.com/merchii*, so feel free to send pull-requests with enhancements of any kind (features, bug-fixes, documentation, tests, etc.) to make it better or useful for you as well.
