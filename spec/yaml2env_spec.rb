@@ -260,6 +260,44 @@ describe Yaml2env do
     end
   end
 
+  describe ".load!" do
+    before do
+      Yaml2env.env = 'production'
+      Yaml2env.root = File.dirname(__FILE__)
+      Yaml2env.logger = nil
+    end
+
+    it 'should be defined' do
+      Yaml2env.must_respond_to :load!
+    end
+
+    it 'should throw error if specified config file that do not exist' do
+      assert_raises Yaml2env::ConfigLoadingError do
+        Yaml2env.load! 'null.yml'
+      end
+    end
+
+    it 'should not throw error if specified config file do exist' do
+      assert Yaml2env.load!('fixtures/example.yml')
+    end
+
+    it 'should throw error if a specified constant-key do not exist in the config file' do
+      assert_raises Yaml2env::MissingConfigKeyError do
+        Yaml2env.load! 'fixtures/example.yml', {:API_KEY => 'bla'}
+      end
+    end
+
+    it 'should not throw error if a specified constant-key do in fact exist in the config file' do
+      assert Yaml2env.load! 'fixtures/example.yml', {:API_KEY => 'api_key', :API_SECRET => 'api_secret'}
+    end
+
+    it 'should set - with Yaml2env - loaded ENV-values' do
+      Yaml2env::LOADED_ENV.clear unless Yaml2env::LOADED_ENV.empty?
+      Yaml2env.load! 'fixtures/example.yml', {:API_KEY => 'api_key', :API_SECRET => 'api_secret'}
+      Yaml2env::LOADED_ENV.must_equal({"API_SECRET" => "PRODUCTION_SECRET", "API_KEY" => "PRODUCTION_KEY"})
+    end
+  end
+
   describe ".load" do
     before do
       Yaml2env.env = 'production'
@@ -271,23 +309,19 @@ describe Yaml2env do
       Yaml2env.must_respond_to :load
     end
 
-    it 'should throw error if specified config file that do not exist' do
-      assert_raises Yaml2env::ConfigLoadingError do
-        Yaml2env.load 'null.yml'
-      end
+    it 'should at maximum log warning if specified config file that do not exist' do
+      assert Yaml2env.load('null.yml')
     end
 
-    it 'should not throw error if specified config file do exist' do
+    it 'should not log warning or raise error if specified config file do exist' do
       assert Yaml2env.load('fixtures/example.yml')
     end
 
-    it 'should throw error if a specified constant-key do not exist in the config file' do
-      assert_raises Yaml2env::MissingConfigKeyError do
-        Yaml2env.load 'fixtures/example.yml', {:API_KEY => 'bla'}
-      end
+    it 'should at maximum log warning if a specified constant-key do not exist in the config file' do
+      assert Yaml2env.load 'fixtures/example.yml', {:API_KEY => 'bla'}
     end
 
-    it 'should not throw error if a specified constant-key do in fact exist in the config file' do
+    it 'should not log warning or raise error if a specified constant-key do in fact exist in the config file' do
       assert Yaml2env.load 'fixtures/example.yml', {:API_KEY => 'api_key', :API_SECRET => 'api_secret'}
     end
 

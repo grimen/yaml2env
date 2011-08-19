@@ -25,7 +25,10 @@ h2. Usage
 To give this some context; this is how we use @Yaml2Env@ to initialize "Hoptoad":http://hoptoadapp.com:
 
 <pre>
-  Yaml2Env.load 'config/hoptoad.yml', {'HOPTOAD_API_KEY' => 'api_key'}
+  Yaml2Env.load! 'config/hoptoad.yml', {'HOPTOAD_API_KEY' => 'api_key'}
+
+  # ...or if a warning note in the logs is enough:
+  #   Yaml2Env.load 'config/hoptoad.yml', {'HOPTOAD_API_KEY' => 'api_key'}
 
   if defined?(HoptoadNotifier)
     HoptoadNotifier.configure do |config|
@@ -53,19 +56,19 @@ To give this some context; this is how we use @Yaml2Env@ to initialize "Hoptoad"
 ...which will yield:
 
 <pre>
-  Rails.env = 'development'
+  # Rails.env => 'development'
   ENV['HOPTOAD_API_KEY'] => 'NONE'
 
-  Rails.env = 'staging'
+  # Rails.env => 'staging'
   ENV['HOPTOAD_API_KEY'] => '123abc'
 
-  Rails.env = 'production'
+  # Rails.env => 'production'
   ENV['HOPTOAD_API_KEY'] => 'abc123'
 
-  Rails.env = 'test'
+  # Rails.env => 'test'
   ENV['HOPTOAD_API_KEY'] => 'NONE'
 
-  Rails.env = 'other'
+  # Rails.env => 'other'
   => "Failed to load required config for environment 'other': /Users/grimen/development/example.com/config/hoptoad.yml"
 </pre>
 

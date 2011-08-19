@@ -55,7 +55,7 @@ module Yaml2env
       yield self
     end
 
-    def load(config_path, required_keys = {}, optional_keys = {})
+    def load!(config_path, required_keys = {}, optional_keys = {})
       self.detect_root!
       self.detect_env!
 
@@ -82,6 +82,17 @@ module Yaml2env
         ::Yaml2env::LOADED_ENV[env_key.to_s] ||
           raise(MissingConfigKeyError, "ENV variable '#{env_key}' needs to be set. Query: #{keys_values.inspect}. Found: #{config.inspect}")
       end
+    end
+
+    def load(config_path, required_keys = {}, optional_keys = {})
+      begin
+        self.load!(config_path, required_keys, optional_keys)
+      rescue Error => e
+        if self.logger?
+          ::Yaml2env.logger.warn("[Yaml2env]: #{e} -- called from: #{__FILE__})")
+        end
+      end
+      true
     end
 
     def loaded?(*constant_names)
