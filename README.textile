@@ -94,4 +94,5 @@ This gem was developed for our own requirements at *"Merchii":http://github.com/
 h2. License
 
 Released under the MIT license.
-Copyright (c) "Merchii":http://github.com/merchii, "Jonas Grimfelt":http://github.com/grimen
+Copyright (c) "Jonas Grimfelt":http://github.com/grimen, "Merchii":http://github.com/merchii
+
