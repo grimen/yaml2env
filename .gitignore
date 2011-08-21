@@ -1,4 +1,9 @@
-*.gem
+.DS_Store
 .bundle
+.rbx
+.*~
 Gemfile.lock
 pkg/*
+*.gem
+*.rbc
+*~
