@@ -1,6 +1,8 @@
 
 == WOULD-BE-NICE
 
+- [doc]: Add some usage examples of the new helpers in README.
+
 - [review]: Find out best practice for testing Pathname vs. String like this: Pathname.new("/tmp") == "/tmp"
 
 - [spec]: Find out why many specs fail when Yaml2env.env is a ActiveSupport::StringInquirer - works in Rails.
