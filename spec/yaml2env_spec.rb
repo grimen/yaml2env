@@ -113,15 +113,104 @@ describe Yaml2env do
       Yaml2env.must_respond_to :env?
     end
 
-    it 'should return true if env is present, otherwise false' do
-      Yaml2env.env = nil
-      Yaml2env.env?.must_equal false
+    describe "with no arguments" do
+      it 'should return true if env is present, otherwise false' do
+        Yaml2env.env = nil
+        Yaml2env.env?.must_equal false
 
-      Yaml2env.env = ""
-      Yaml2env.env?.must_equal false
+        Yaml2env.env = ""
+        Yaml2env.env?.must_equal false
 
-      Yaml2env.env = "development"
-      Yaml2env.env?.must_equal true
+        Yaml2env.env = "development"
+        Yaml2env.env?.must_equal true
+      end
+    end
+
+    describe "with one argument" do
+      # Stupid spec, but for the record...
+      it 'nil/blank: should return true if env equals, otherwise false' do
+        Yaml2env.env = nil
+        Yaml2env.env?(nil).must_equal true
+        Yaml2env.env?("").must_equal true
+
+        Yaml2env.env = ""
+        Yaml2env.env?(nil).must_equal true
+        Yaml2env.env?("").must_equal true
+      end
+
+      it 'string: should return true if env equals, otherwise false' do
+        Yaml2env.env = nil
+        Yaml2env.env?("development").must_equal false
+
+        Yaml2env.env = ""
+        Yaml2env.env?("development").must_equal false
+
+        Yaml2env.env = "development"
+        Yaml2env.env?("development").must_equal true
+
+        Yaml2env.env = "staging"
+        Yaml2env.env?("development").must_equal false
+      end
+
+      it 'regexp: should return true if env matches, otherwise false' do
+        Yaml2env.env = nil
+        Yaml2env.env?(/development|staging/).must_equal false
+
+        Yaml2env.env = ""
+        Yaml2env.env?(/development|staging/).must_equal false
+
+        Yaml2env.env = "development"
+        Yaml2env.env?(/development|staging/).must_equal true
+
+        Yaml2env.env = "staging"
+        Yaml2env.env?(/development|staging/).must_equal true
+      end
+    end
+
+    describe "with one argument" do
+      # *<:)
+      it 'nils/blanks: should return true if env equals, otherwise false' do
+        Yaml2env.env = nil
+        lambda { Yaml2env.env?(nil, nil) }.must_raise Yaml2env::HumanError
+        lambda { Yaml2env.env?(nil, "") }.must_raise Yaml2env::HumanError
+        lambda { Yaml2env.env?("", "") }.must_raise Yaml2env::HumanError
+
+        Yaml2env.env = ""
+        lambda { Yaml2env.env?(nil, nil) }.must_raise Yaml2env::HumanError
+        lambda { Yaml2env.env?(nil, "") }.must_raise Yaml2env::HumanError
+        lambda { Yaml2env.env?("", "") }.must_raise Yaml2env::HumanError
+      end
+
+      it 'strings: should return true if env equals, otherwise false' do
+        Yaml2env.env = nil
+        Yaml2env.env?("development", "staging").must_equal false
+
+        Yaml2env.env = ""
+        Yaml2env.env?("development", "staging").must_equal false
+
+        Yaml2env.env = "development"
+        Yaml2env.env?("development", "staging").must_equal true
+
+        Yaml2env.env = "staging"
+        Yaml2env.env?("development", "staging").must_equal true
+
+        Yaml2env.env = "production"
+        Yaml2env.env?("development", "staging").must_equal false
+      end
+
+      it 'regexpes: should return true if env matches, otherwise false' do
+        Yaml2env.env = nil
+        Yaml2env.env?(/development|staging/).must_equal false
+
+        Yaml2env.env = ""
+        Yaml2env.env?(/development|staging/).must_equal false
+
+        Yaml2env.env = "development"
+        Yaml2env.env?(/development|staging/).must_equal true
+
+        Yaml2env.env = "staging"
+        Yaml2env.env?(/development|staging/).must_equal true
+      end
     end
   end
 

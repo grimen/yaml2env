@@ -1,5 +1,7 @@
 require 'yaml'
 require 'logger'
+require 'active_support/string_inquirer'
+require 'active_support/core_ext/object/blank'
 
 module Yaml2env
 
@@ -15,6 +17,9 @@ module Yaml2env
   end
 
   class MissingConfigKeyError < Error
+  end
+
+  class HumanError < Error
   end
 
   # Hash tracking all of the loaded ENV-values via Yaml2env.load.
@@ -128,11 +133,18 @@ module Yaml2env
     end
 
     def root?
-      !(self.root.to_s =~ /^\s*$/)
+      !self.root.blank?
     end
 
-    def env?
-      !(self.env.to_s =~ /^\s*$/)
+    def env?(*args)
+      if args.size > 0
+        raise HumanError, "Seriously, what are you trying to do? *<:)" if args.size > 1 && args.count { |a| a.blank? } > 1
+        args.any? do |arg|
+          arg.is_a?(Regexp) ? self.env.to_s =~ arg : self.env.to_s == arg.to_s
+        end
+      else
+        !self.env.blank?
+      end
     end
 
     protected
