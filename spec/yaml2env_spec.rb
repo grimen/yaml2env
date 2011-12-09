@@ -131,6 +131,32 @@ describe Yaml2env do
       Yaml2env.root = "/tmp"
       Yaml2env.root.to_s.must_equal "/tmp"
     end
+
+    # FIXME: See TODO.
+    it "should respond true/false for matching environment via method missing (a.k.a. string inquiry)" do
+      skip
+
+      Yaml2env.env.must_respond_to :development?
+      Yaml2env.env.must_respond_to :staging?
+      Yaml2env.env.must_respond_to :production?
+      Yaml2env.env.must_respond_to :bogus?
+
+      Yaml2env.env = nil
+      Yaml2env.env.development?.must_equal false
+
+      Yaml2env.env = ""
+      Yaml2env.env.development?.must_equal false
+
+      Yaml2env.env = "development"
+      Yaml2env.env.development?.must_equal true
+      Yaml2env.env.bogus?.must_equal false
+
+      Yaml2env.env = "staging"
+      Yaml2env.env.development?.must_equal false
+
+      Yaml2env.env = "production"
+      Yaml2env.env.production?.must_equal true
+    end
   end
 
   describe ".env?" do
@@ -261,34 +287,34 @@ describe Yaml2env do
       Yaml2env.must_respond_to :detect_root!
     end
 
-    it "should detect environment for Rack-apps - 1st" do
+    it "should detect environment for Rack_apps - 1st" do
       rack!(true)
       rails!(true)
       sinatra!(true)
 
       Yaml2env.root = nil
       Yaml2env.detect_root!
-      Yaml2env.root.to_s.must_equal '/home/grimen/development/rack-app'
+      Yaml2env.root.to_s.must_equal '/home/grimen/development/rack_app'
     end
 
-    it "should detect environment for Rails-apps - 2nd" do
+    it "should detect environment for Rails_apps - 2nd" do
       rack!(false)
       rails!(true)
       sinatra!(true)
 
       Yaml2env.root = nil
       Yaml2env.detect_root!
-      Yaml2env.root.to_s.must_equal '/home/grimen/development/rails-app'
+      Yaml2env.root.to_s.must_equal '/home/grimen/development/rails_app'
     end
 
-    it "should detect environment for Sinatra-apps - 3rd" do
+    it "should detect environment for Sinatra_apps - 3rd" do
       rack!(false)
       rails!(false)
       sinatra!(true)
 
       Yaml2env.root = nil
       Yaml2env.detect_root!
-      Yaml2env.root.to_s.must_equal '/home/grimen/development/sinatra-app'
+      Yaml2env.root.to_s.must_equal '/home/grimen/development/sinatra_app'
     end
 
     it 'should complain if no environment could be detected' do
@@ -308,34 +334,34 @@ describe Yaml2env do
       Yaml2env.must_respond_to :detect_env!
     end
 
-    it "should detect environment for Rack-apps - 1st" do
+    it "should detect environment for Rack_apps - 1st" do
       rack!(true)
       rails!(true)
       sinatra!(true)
 
       Yaml2env.env = nil
       Yaml2env.detect_env!
-      Yaml2env.env.must_equal 'rack-env'
+      Yaml2env.env.must_equal 'rack_env'
     end
 
-    it "should detect environment for Rails-apps - 2nd" do
+    it "should detect environment for Rails_apps - 2nd" do
       rack!(false)
       rails!(true)
       sinatra!(true)
 
       Yaml2env.env = nil
       Yaml2env.detect_env!
-      Yaml2env.env.must_equal 'rails-env'
+      Yaml2env.env.must_equal 'rails_env'
     end
 
-    it "should detect environment for Sinatra-apps - 3rd" do
+    it "should detect environment for Sinatra_apps - 3rd" do
       rack!(false)
       rails!(false)
       sinatra!(true)
 
       Yaml2env.env = nil
       Yaml2env.detect_env!
-      Yaml2env.env.must_equal 'sinatra-env'
+      Yaml2env.env.must_equal 'sinatra_env'
     end
 
     it 'should complain if no environment could be detected' do

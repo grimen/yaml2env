@@ -45,7 +45,7 @@ module Yaml2env
 
   class << self
 
-    [:env, :logger].each do |name|
+    [:logger].each do |name|
       define_method name do
         class_variable_get "@@#{name}"
       end
@@ -61,7 +61,7 @@ module Yaml2env
       if value.present?
         value = File.expand_path(value) rescue value
         value = Pathname.new(value) rescue value
-        # TODO: Makes sense, but need to rewrite specs somewhat - later.
+        # FIXME: Makes sense, but need to rewrite specs somewhat - later.
         # if Dir.exists?(value)
         #   value = Pathname.new(value).expand_path
         # else
@@ -69,6 +69,15 @@ module Yaml2env
         # end
       end
       class_variable_set :'@@root', value
+    end
+
+    define_method :'env' do
+      class_variable_get :'@@env'
+    end
+    define_method :'env=' do |value|
+      # FIXME: Specs "Yaml2env.env.must_equal" fails in really weird way with this line enabled.
+      # value = ActiveSupport::StringInquirer.new(value.to_s) unless value.is_a?(ActiveSupport::StringInquirer)
+      class_variable_set :'@@env', value
     end
 
     alias :environment :env

@@ -9,8 +9,8 @@ require 'yaml2env'
 
 def rack!(loaded)
   if loaded
-    ::ENV['RACK_ROOT'] = '/home/grimen/development/rack-app'
-    ::ENV['RACK_ENV'] = 'rack-env'
+    ::ENV['RACK_ROOT'] = '/home/grimen/development/rack_app'
+    ::ENV['RACK_ENV'] = 'rack_env'
   else
     ::ENV['RACK_ROOT'] = nil
     ::ENV['RACK_ENV'] = nil
@@ -28,8 +28,8 @@ def rails!(loaded)
         end
       end
     EVAL
-    Rails.root = '/home/grimen/development/rails-app'
-    Rails.env = 'rails-env'
+    Rails.root = '/home/grimen/development/rails_app'
+    Rails.env = 'rails_env'
   else
     Object.send(:remove_const, :Rails) if defined?(::Rails)
   end
@@ -48,8 +48,8 @@ def sinatra!(loaded)
       end
     end
     EVAL
-    Sinatra::Application.root = '/home/grimen/development/sinatra-app'
-    Sinatra::Application.environment = 'sinatra-env'
+    Sinatra::Application.root = '/home/grimen/development/sinatra_app'
+    Sinatra::Application.environment = 'sinatra_env'
   else
     Object.send(:remove_const, :Sinatra) if defined?(::Sinatra::Application)
   end
