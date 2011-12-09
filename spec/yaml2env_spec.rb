@@ -708,4 +708,96 @@ describe Yaml2env do
     end
   end
 
+  describe ".log_env" do
+    before do
+      Yaml2env.default_env = nil
+    end
+
+    it 'should be defined' do
+      Yaml2env.must_respond_to :log_env
+    end
+
+    it 'should log env value' do
+      Yaml2env.env = nil
+      lambda {
+        Yaml2env.log_env
+      }.must_output %{:: Yaml2env.env = nil\n}
+
+      Yaml2env.env = 'development'
+      lambda {
+        Yaml2env.log_env
+      }.must_output %{:: Yaml2env.env = "development"\n}
+    end
+
+    it 'should show default env is used if this is the case' do
+      Yaml2env.default_env = 'development'
+      Yaml2env.env = 'development'
+      lambda {
+        Yaml2env.log_env
+      }.must_output %{:: Yaml2env.env = "development" (default)\n}
+
+      Yaml2env.default_env = 'development'
+      Yaml2env.env = 'staging'
+      lambda {
+        Yaml2env.log_env
+      }.must_output %{:: Yaml2env.env = "staging"\n}
+    end
+  end
+
+  describe ".log_root" do
+    it 'should be defined' do
+      Yaml2env.must_respond_to :log_root
+    end
+
+    it 'should log root value' do
+      Yaml2env.root = nil
+      lambda {
+        Yaml2env.log_root
+      }.must_output %{:: Yaml2env.root = nil\n}
+
+      Yaml2env.root = '/tmp/path'
+      lambda {
+        Yaml2env.log_root
+      }.must_output %{:: Yaml2env.root = "/tmp/path"\n}
+    end
+  end
+
+  describe ".log_values" do
+    it 'should be defined' do
+      Yaml2env.must_respond_to :log_values
+    end
+
+    it 'should log ENV values' do
+      with_constants :ENV => {"API_SECRET" => "PRODUCTION_SECRET", "API_KEY" => "PRODUCTION_KEY"} do
+        lambda {
+          Yaml2env.log_values
+        }.must_output %{:: ENV = {\"API_KEY\"=>\"PRODUCTION_KEY\", \"API_SECRET\"=>\"PRODUCTION_SECRET\"}\n}
+      end
+    end
+
+    it 'should log ENV values for specified key(s)' do
+      with_constants :ENV => {"API_SECRET" => "PRODUCTION_SECRET", "API_KEY" => "PRODUCTION_KEY"} do
+        lambda {
+          Yaml2env.log_values 'API_KEY'
+        }.must_output %{:: ENV = {\"API_KEY\"=>\"PRODUCTION_KEY\"}\n}
+
+        lambda {
+          Yaml2env.log_values 'API_KEY', 'API_SECRET', 'BOGUS'
+        }.must_output %{:: ENV = {\"API_KEY\"=>\"PRODUCTION_KEY\", \"API_SECRET\"=>\"PRODUCTION_SECRET\"}\n}
+      end
+    end
+
+    it 'should log ENV values for specified key expression' do
+      with_constants :ENV => {"API_SECRET" => "PRODUCTION_SECRET", "API_KEY" => "PRODUCTION_KEY"} do
+        lambda {
+          Yaml2env.log_values /API_KEY/
+        }.must_output %{:: ENV = {\"API_KEY\"=>\"PRODUCTION_KEY\"}\n}
+
+        lambda {
+          Yaml2env.log_values /API_KEY|API_SECRET|BOGUS/
+        }.must_output %{:: ENV = {\"API_KEY\"=>\"PRODUCTION_KEY\", \"API_SECRET\"=>\"PRODUCTION_SECRET\"}\n}
+      end
+    end
+  end
+
 end

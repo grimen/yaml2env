@@ -2,6 +2,12 @@ require 'yaml'
 require 'logger'
 require 'active_support/string_inquirer'
 require 'active_support/core_ext/object/blank'
+require 'pp'
+begin
+  require 'awesome_print'
+rescue LoadError
+  # optional
+end
 
 module Yaml2env
 
@@ -53,10 +59,10 @@ module Yaml2env
 
     [:default_env, :logger].each do |name|
       define_method name do
-        class_variable_get "@@#{name}"
+        class_variable_get :"@@#{name}"
       end
-      define_method "#{name}=" do |value|
-        class_variable_set "@@#{name}", value
+      define_method :"#{name}=" do |value|
+        class_variable_set :"@@#{name}", value
       end
     end
 
@@ -224,7 +230,45 @@ module Yaml2env
       end
     end
 
+    def log_env
+      value = self.env.inspect
+      output = ":: Yaml2env.env = #{value}"
+      output << " (default)" if Yaml2env.env == Yaml2env.default_env && Yaml2env.default_env.present?
+      puts output
+    end
+
+    def log_root
+      value = self.root.present? ? self.root.to_s.inspect : self.root.inspect
+      output = ":: Yaml2env.root = #{value}"
+      puts output
+    end
+
+    def log_values(*args)
+      if args.blank?
+        should_include = proc { true }
+      elsif args.first.is_a?(Regexp)
+        key_pattern = args.shift
+        should_include = proc { |key| key =~ key_pattern }
+      else
+        should_include = proc { |key| args.any? { |key_string| key == key_string; }  }
+      end
+      values = {}
+      ENV.keys.sort.each do |k,v|
+        values[k] = ENV[k] if should_include.call(k)
+      end
+      print ":: ENV = "
+      pretty values
+    end
+
     protected
+
+      def pretty(*args)
+        begin
+          ap *args
+        rescue
+          pp *args
+        end
+      end
 
       def info(message)
         self.logger.info message if self.logger?
