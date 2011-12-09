@@ -126,7 +126,7 @@ module Yaml2env
       keys_values.each do |extected_env_key, extected_yaml_key|
         config_value = config[extected_yaml_key.to_s]
         ::Yaml2env::LOADED_ENV[extected_env_key.to_s] = ::ENV[extected_env_key.to_s] = config_value
-        self.logger.info ":: ENV[#{extected_env_key.inspect}] = #{::ENV[extected_env_key.to_s].inspect}" if self.logger?
+        info ":: ENV[#{extected_env_key.inspect}] = #{::ENV[extected_env_key.to_s].inspect}"
       end
 
       self.loaded[config_path] = config
@@ -226,9 +226,14 @@ module Yaml2env
 
     protected
 
+      def info(message)
+        self.logger.info message if self.logger?
+        # puts message
+      end
+
       # FIXME: Should show filepath for calle.
       def warn(message)
-        ::Yaml2env.logger.warn(message) if self.logger?
+        self.logger.warn(message) if self.logger?
         # puts message
       end
 
