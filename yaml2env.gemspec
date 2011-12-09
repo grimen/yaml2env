@@ -12,11 +12,8 @@ Gem::Specification.new do |s|
   s.summary     = %q{YAML => ENV for environment-specific configs}
   s.description = %q{Stash environment-specific configs in YAML-files and load them into ENV according to best-practices pattern - and auto-detects on-initialization if something is missing (skipping the "scratching the head"-part).}
 
-  s.required_rubygems_version = '>= 1.3.6'
-  s.rubyforge_project         = s.name
-
   s.add_development_dependency 'rake'
-  s.add_development_dependency 'bundler', '~> 1.0.0'
+  s.add_development_dependency 'bundler'
   s.add_development_dependency 'minitest'
   s.add_development_dependency 'guard'
   s.add_development_dependency 'guard-bundler'
