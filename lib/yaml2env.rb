@@ -124,7 +124,7 @@ module Yaml2env
       elsif defined?(::Sinatra::Application)
         ::Sinatra::Application.environment
       else
-        raise DetectionFailedError, "Failed to auto-detect Yaml2env.root (config root). Specify environment before loading any configs/initializers using Yaml2env, e.g. Yaml2env.env = 'development'."
+        raise DetectionFailedError, "Failed to auto-detect Yaml2env.env (config environment). Specify environment before loading any configs/initializers using Yaml2env, e.g. Yaml2env.env = 'development'."
       end
     end
 
