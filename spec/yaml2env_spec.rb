@@ -77,6 +77,26 @@ describe Yaml2env do
     end
   end
 
+  describe ".root?" do
+    it 'should be defined' do
+      Yaml2env.must_respond_to :root?
+    end
+
+    it 'should return true if root is present, otherwise false' do
+      Yaml2env.root = nil
+      Yaml2env.root?.must_equal false
+
+      Yaml2env.root = ""
+      Yaml2env.root?.must_equal false
+
+      Yaml2env.root = "/"
+      Yaml2env.root?.must_equal true
+
+      Yaml2env.root = "/path/to/project"
+      Yaml2env.root?.must_equal true
+    end
+  end
+
   describe ".env" do
     it 'should be defined' do
       Yaml2env.must_respond_to :env
@@ -85,6 +105,23 @@ describe Yaml2env do
     it 'should be writable' do
       Yaml2env.root = "/tmp"
       Yaml2env.root.must_equal "/tmp"
+    end
+  end
+
+  describe ".env?" do
+    it 'should be defined' do
+      Yaml2env.must_respond_to :env?
+    end
+
+    it 'should return true if env is present, otherwise false' do
+      Yaml2env.env = nil
+      Yaml2env.env?.must_equal false
+
+      Yaml2env.env = ""
+      Yaml2env.env?.must_equal false
+
+      Yaml2env.env = "development"
+      Yaml2env.env?.must_equal true
     end
   end
 

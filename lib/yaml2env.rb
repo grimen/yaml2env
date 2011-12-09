@@ -127,7 +127,16 @@ module Yaml2env
       self.logger.respond_to?(:info)
     end
 
+    def root?
+      !(self.root.to_s =~ /^\s*$/)
+    end
+
+    def env?
+      !(self.env.to_s =~ /^\s*$/)
+    end
+
     protected
+
       def load_config(config_file)
         YAML.load(File.open(config_file))
       end
@@ -136,6 +145,7 @@ module Yaml2env
         config = self.load_config(config_file)
         config[env]
       end
+
   end
 
 end
