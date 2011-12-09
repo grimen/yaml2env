@@ -73,7 +73,32 @@ describe Yaml2env do
 
     it 'should be writable' do
       Yaml2env.root = "/tmp"
-      Yaml2env.root.must_equal "/tmp"
+      Yaml2env.root.to_s.must_equal "/tmp"
+    end
+
+    it 'should be Pathname - respond to #join - if present' do
+      Yaml2env.root = nil
+      Yaml2env.root.must_be_kind_of NilClass
+      Yaml2env.root.wont_respond_to :join
+
+      Yaml2env.root = ""
+      Yaml2env.root.must_be_kind_of String
+      Yaml2env.root.wont_respond_to :join
+
+      Yaml2env.root = "/tmp"
+      Yaml2env.root.must_be_kind_of Pathname
+      Yaml2env.root.must_respond_to :join
+      Yaml2env.root.join('ponies').to_s.must_equal "/tmp/ponies"
+    end
+
+    # TODO: Need to alter other specs to get this work well - later.
+    # it 'should not accept non-existing path - makes no sense' do
+    #   lambda { Yaml2env.root = "/tmp/i_dont_exist" }.must_raise Yaml2env::InvalidRootError
+    # end
+
+    it 'should expand path automatically' do
+      Yaml2env.root = "/tmp/path/../path/.."
+      Yaml2env.root.to_s.must_equal "/tmp"
     end
   end
 
@@ -104,7 +129,7 @@ describe Yaml2env do
 
     it 'should be writable' do
       Yaml2env.root = "/tmp"
-      Yaml2env.root.must_equal "/tmp"
+      Yaml2env.root.to_s.must_equal "/tmp"
     end
   end
 
@@ -226,7 +251,7 @@ describe Yaml2env do
         c.root = '/home/grimen/projects/hello_world'
         c.env = 'production'
       end
-      Yaml2env.root.must_equal '/home/grimen/projects/hello_world'
+      Yaml2env.root.to_s.must_equal '/home/grimen/projects/hello_world'
       Yaml2env.env.must_equal 'production'
     end
   end
@@ -243,7 +268,7 @@ describe Yaml2env do
 
       Yaml2env.root = nil
       Yaml2env.detect_root!
-      Yaml2env.root.must_equal '/home/grimen/development/rack-app'
+      Yaml2env.root.to_s.must_equal '/home/grimen/development/rack-app'
     end
 
     it "should detect environment for Rails-apps - 2nd" do
@@ -253,7 +278,7 @@ describe Yaml2env do
 
       Yaml2env.root = nil
       Yaml2env.detect_root!
-      Yaml2env.root.must_equal '/home/grimen/development/rails-app'
+      Yaml2env.root.to_s.must_equal '/home/grimen/development/rails-app'
     end
 
     it "should detect environment for Sinatra-apps - 3rd" do
@@ -263,7 +288,7 @@ describe Yaml2env do
 
       Yaml2env.root = nil
       Yaml2env.detect_root!
-      Yaml2env.root.must_equal '/home/grimen/development/sinatra-app'
+      Yaml2env.root.to_s.must_equal '/home/grimen/development/sinatra-app'
     end
 
     it 'should complain if no environment could be detected' do

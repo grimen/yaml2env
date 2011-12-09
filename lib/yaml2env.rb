@@ -10,6 +10,9 @@ module Yaml2env
   class Error < ::StandardError
   end
 
+  class ArgumentError < ::ArgumentError
+  end
+
   class DetectionFailedError < Error
   end
 
@@ -17,6 +20,9 @@ module Yaml2env
   end
 
   class MissingConfigKeyError < Error
+  end
+
+  class InvalidRootError < ArgumentError
   end
 
   class HumanError < Error
@@ -39,13 +45,30 @@ module Yaml2env
 
   class << self
 
-    [:root, :env, :logger].each do |name|
+    [:env, :logger].each do |name|
       define_method name do
         class_variable_get "@@#{name}"
       end
       define_method "#{name}=" do |value|
         class_variable_set "@@#{name}", value
       end
+    end
+
+    define_method :'root' do
+      class_variable_get :'@@root'
+    end
+    define_method :'root=' do |value|
+      if value.present?
+        value = File.expand_path(value) rescue value
+        value = Pathname.new(value) rescue value
+        # TODO: Makes sense, but need to rewrite specs somewhat - later.
+        # if Dir.exists?(value)
+        #   value = Pathname.new(value).expand_path
+        # else
+        #   raise InvalidRootError, "Trying to set Yaml2env.root to a path that don't exists: #{value.inspect}. Yaml2env.root must point to existing path."
+        # end
+      end
+      class_variable_set :'@@root', value
     end
 
     alias :environment :env

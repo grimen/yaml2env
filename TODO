@@ -1,0 +1,4 @@
+
+== WOULD-BE-NICE
+
+- [review]: Find out best practice for testing Pathname vs. String like this: Pathname.new("/tmp") == "/tmp"
