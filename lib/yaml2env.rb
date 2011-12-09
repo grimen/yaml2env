@@ -25,6 +25,9 @@ module Yaml2env
   class InvalidRootError < ArgumentError
   end
 
+  class AlreadyLoadedError < Error
+  end
+
   class HumanError < Error
   end
 
@@ -107,7 +110,9 @@ module Yaml2env
       config ||= {}
 
       begin
-        config_path = File.expand_path(File.join(self.root, config_path)).to_s
+        unless File.exists?(config_path)
+          config_path = File.expand_path(File.join(self.root, config_path)).to_s
+        end
         config = self.load_config_for_env(config_path, self.env)
       rescue
         raise ConfigLoadingError, "Failed to load required config for environment '#{self.env}': #{config_path}"
@@ -136,14 +141,34 @@ module Yaml2env
     end
 
     def load(config_path, required_keys = {}, optional_keys = {})
+      args = [config_path, required_keys, optional_keys]
       begin
         self.load!(config_path, required_keys, optional_keys)
       rescue Error => e
-        if self.logger?
-          ::Yaml2env.logger.warn("[Yaml2env]: #{e} -- called from: #{__FILE__})")
-        end
+        warn "[Yaml2env]: #{e} -- arguments: #{args.inspect})"
       end
       true
+    end
+
+    public # force public - we are overriding private Ruby method here, but should be all good in the hood. >:)
+
+    def require!(config_path, required_keys = {}, optional_keys = {})
+      self.detect_root!
+      config_path = File.expand_path(File.join(self.root, config_path)).to_s
+      raise AlreadyLoadedError, "Already loaded:" if self.loaded_files.include?(config_path)
+      self.load!(config_path, required_keys, optional_keys)
+    end
+
+    def require(*args)
+      begin
+        self.require!(*args)
+        true
+      rescue AlreadyLoadedError => e
+        false
+      rescue Error => e
+        warn "[Yaml2env]: #{e} -- arguments: #{args.inspect})"
+        false
+      end
     end
 
     def loaded_files
@@ -200,6 +225,12 @@ module Yaml2env
     end
 
     protected
+
+      # FIXME: Should show filepath for calle.
+      def warn(message)
+        ::Yaml2env.logger.warn(message) if self.logger?
+        # puts message
+      end
 
       def load_config(config_file)
         YAML.load(File.open(config_file))

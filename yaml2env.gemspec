@@ -25,4 +25,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'guard'
   s.add_development_dependency 'guard-bundler'
   s.add_development_dependency 'guard-minitest'
+  s.add_development_dependency 'mocha'
 end
