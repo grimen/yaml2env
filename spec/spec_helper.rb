@@ -1,8 +1,4 @@
 # -*- encoding: utf-8 -*-
-require 'rubygems'
-require 'bundler'
-Bundler.require
-
 require 'minitest/autorun'
 require 'minitest/unit'
 require 'minitest/spec'
@@ -10,6 +6,54 @@ require 'minitest/pride'
 require 'minitest/mock'
 
 require 'yaml2env'
+
+def rack!(loaded)
+  if loaded
+    ::ENV['RACK_ROOT'] = '/home/grimen/development/rack-app'
+    ::ENV['RACK_ENV'] = 'rack-env'
+  else
+    ::ENV['RACK_ROOT'] = nil
+    ::ENV['RACK_ENV'] = nil
+  end
+end
+
+def rails!(loaded)
+  if loaded
+    eval <<-EVAL
+      unless defined?(::Rails)
+        module ::Rails
+          class << self
+            attr_accessor :root, :env
+          end
+        end
+      end
+    EVAL
+    Rails.root = '/home/grimen/development/rails-app'
+    Rails.env = 'rails-env'
+  else
+    Object.send(:remove_const, :Rails) if defined?(::Rails)
+  end
+end
+
+def sinatra!(loaded)
+  if loaded
+    eval <<-EVAL
+    unless defined?(::Sinatra::Application)
+      module ::Sinatra
+        class Application
+          class << self
+            attr_accessor :root, :environment
+          end
+        end
+      end
+    end
+    EVAL
+    Sinatra::Application.root = '/home/grimen/development/sinatra-app'
+    Sinatra::Application.environment = 'sinatra-env'
+  else
+    Object.send(:remove_const, :Sinatra) if defined?(::Sinatra::Application)
+  end
+end
 
 def silence_all_warnings
   # Ruby 1.8: Kernel.silence_warnings { yield }
