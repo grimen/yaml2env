@@ -43,6 +43,9 @@ module Yaml2env
   # Default: +::Logger.new(::STDOUT)+
   @@logger = ::Logger.new(::STDOUT)
 
+  # Loaded files and their values.
+  @@loaded = {}
+
   class << self
 
     [:default_env, :logger].each do |name|
@@ -80,12 +83,17 @@ module Yaml2env
       class_variable_set :'@@env', value
     end
 
+    define_method :'loaded' do
+      class_variable_get :'@@loaded'
+    end
+
     alias :environment :env
 
     def defaults!
       @@root ||= nil
       @@env ||= nil
       @@logger ||= ::Logger.new(::STDOUT)
+      @@loaded ||= {}
     end
 
     def configure
@@ -107,18 +115,24 @@ module Yaml2env
 
       # Merge required + optional keys.
       keys_values = optional_keys.merge(required_keys)
+      loaded_key_values = {}
 
       # Stash found keys from the config into ENV.
       keys_values.each do |extected_env_key, extected_yaml_key|
-        ::Yaml2env::LOADED_ENV[extected_env_key.to_s] = ::ENV[extected_env_key.to_s] = config[extected_yaml_key.to_s]
+        config_value = config[extected_yaml_key.to_s]
+        ::Yaml2env::LOADED_ENV[extected_env_key.to_s] = ::ENV[extected_env_key.to_s] = config_value
         self.logger.info ":: ENV[#{extected_env_key.inspect}] = #{::ENV[extected_env_key.to_s].inspect}" if self.logger?
       end
+
+      self.loaded[config_path] = config
 
       # Raise error if any credentials are missing.
       required_keys.keys.each do |env_key|
         ::Yaml2env::LOADED_ENV[env_key.to_s] ||
           raise(MissingConfigKeyError, "ENV variable '#{env_key}' needs to be set. Query: #{keys_values.inspect}. Found: #{config.inspect}")
       end
+
+      true
     end
 
     def load(config_path, required_keys = {}, optional_keys = {})
@@ -130,6 +144,10 @@ module Yaml2env
         end
       end
       true
+    end
+
+    def loaded_files
+      self.loaded.keys
     end
 
     def loaded?(*constant_names)

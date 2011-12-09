@@ -531,6 +531,52 @@ describe Yaml2env do
     end
   end
 
+  describe ".loaded" do
+    before do
+      Yaml2env.env = 'production'
+      Yaml2env.root = File.dirname(__FILE__)
+      Yaml2env.logger = nil
+    end
+
+    it 'should be defined' do
+      Yaml2env.must_respond_to :loaded
+    end
+
+    it 'should hold any loaded values - based on loaded filename as key' do
+      key_1 = File.join(File.dirname(__FILE__), 'fixtures/example.yml')
+      key_2 = File.join(File.dirname(__FILE__), 'fixtures/example2.yml')
+
+      Yaml2env.load 'fixtures/example.yml', {:API_KEY => 'api_key', :API_SECRET => 'api_secret'}
+      Yaml2env.loaded.keys.must_include key_1
+      Yaml2env.loaded[key_1].must_equal({'api_key' => 'PRODUCTION_KEY', 'api_secret' => 'PRODUCTION_SECRET'})
+
+      Yaml2env.load 'fixtures/example2.yml', {:API_KEY => 'api_key', :API_SECRET => 'api_secret'}
+      Yaml2env.loaded.keys.must_include key_1
+      Yaml2env.loaded.keys.must_include key_2
+      Yaml2env.loaded[key_1].must_equal({'api_key' => 'PRODUCTION_KEY',   'api_secret' => 'PRODUCTION_SECRET'})
+      Yaml2env.loaded[key_2].must_equal({'api_key' => 'PRODUCTION_KEY_2', 'api_secret' => 'PRODUCTION_SECRET_2'})
+    end
+  end
+
+  describe ".loaded_files" do
+    it 'should be defined' do
+      Yaml2env.must_respond_to :loaded_files
+    end
+
+    it 'should return loaded files' do
+      file_1 = File.join(File.dirname(__FILE__), 'fixtures/example.yml')
+      file_2 = File.join(File.dirname(__FILE__), 'fixtures/example2.yml')
+
+      Yaml2env.loaded_files.must_be_kind_of Array
+
+      Yaml2env.load 'fixtures/example.yml'
+      Yaml2env.loaded_files.must_include file_1
+
+      Yaml2env.load 'fixtures/example2.yml'
+      Yaml2env.loaded_files.must_include file_1, file_2
+    end
+  end
+
   describe ".loaded?" do
     before do
       Yaml2env::LOADED_ENV.clear unless Yaml2env::LOADED_ENV.empty?
