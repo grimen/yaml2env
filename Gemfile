@@ -1,11 +1,13 @@
 source "http://rubygems.org"
 
-# Specify your gem's dependencies in yaml2env.gemspec
 gemspec
 
 group :test do
   group :darwin do
     gem 'rb-fsevent'
   end
+
+  # Solving runner bug: https://github.com/guard/guard-minitest/pull/25
+  gem 'guard-minitest', :git => 'https://github.com/grimen/guard-minitest'
 end
 
