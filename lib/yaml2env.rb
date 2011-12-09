@@ -45,7 +45,7 @@ module Yaml2env
 
   class << self
 
-    [:logger].each do |name|
+    [:default_env, :logger].each do |name|
       define_method name do
         class_variable_get "@@#{name}"
       end
@@ -149,12 +149,14 @@ module Yaml2env
     end
 
     def detect_env!
-      self.env ||= if ::ENV.key?('RACK_ENV')
+      self.env ||= if ::ENV['RACK_ENV'].present?
         ::ENV['RACK_ENV']
       elsif defined?(::Rails)
         ::Rails.env
       elsif defined?(::Sinatra::Application)
         ::Sinatra::Application.environment
+      elsif self.default_env.present?
+        self.default_env
       else
         raise DetectionFailedError, "Failed to auto-detect Yaml2env.env (config environment). Specify environment before loading any configs/initializers using Yaml2env, e.g. Yaml2env.env = 'development'."
       end
