@@ -4,7 +4,6 @@ rvm:
   - ree
   - ruby-head
   - rbx
-  - rbx-2.0
   - jruby
 notifications:
   disabled: true

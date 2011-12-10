@@ -1,6 +1,8 @@
 require 'yaml'
 require 'logger'
 require 'active_support/string_inquirer'
+require 'active_support/hash_with_indifferent_access'
+require 'active_support/ordered_hash'
 require 'active_support/core_ext/object/blank'
 require 'pp'
 begin
@@ -26,6 +28,9 @@ module Yaml2env
   end
 
   class MissingConfigKeyError < Error
+  end
+
+  class InvalidConfigValueError < Error
   end
 
   class InvalidRootError < ArgumentError
@@ -54,6 +59,9 @@ module Yaml2env
 
   # Loaded files and their values.
   @@loaded = {}
+
+  # Default env.
+  @@default_env = nil
 
   class << self
 
@@ -103,6 +111,7 @@ module Yaml2env
       @@env ||= nil
       @@logger ||= ::Logger.new(::STDOUT)
       @@loaded ||= {}
+      @@default_env ||= nil
     end
 
     def configure
@@ -126,7 +135,7 @@ module Yaml2env
 
       # Merge required + optional keys.
       keys_values = optional_keys.merge(required_keys)
-      loaded_key_values = {}
+      loaded_key_values = ActiveSupport::OrderedHash.new
 
       # Stash found keys from the config into ENV.
       keys_values.each do |extected_env_key, extected_yaml_key|
@@ -148,6 +157,7 @@ module Yaml2env
 
     def load(config_path, required_keys = {}, optional_keys = {})
       args = [config_path, required_keys, optional_keys]
+
       begin
         self.load!(config_path, required_keys, optional_keys)
       rescue Error => e
@@ -216,7 +226,7 @@ module Yaml2env
     end
 
     def root?
-      !self.root.blank?
+      self.root.present?
     end
 
     def env?(*args)
@@ -226,14 +236,18 @@ module Yaml2env
           arg.is_a?(Regexp) ? self.env.to_s =~ arg : self.env.to_s == arg.to_s
         end
       else
-        !self.env.blank?
+        self.env.present?
       end
+    end
+
+    def default_env?
+      self.env == self.default_env
     end
 
     def log_env
       value = self.env.inspect
       output = ":: Yaml2env.env = #{value}"
-      output << " (default)" if Yaml2env.env == Yaml2env.default_env && Yaml2env.default_env.present?
+      output << " (default)" if self.default_env? && self.default_env.present?
       puts output
     end
 
@@ -252,15 +266,81 @@ module Yaml2env
       else
         should_include = proc { |key| args.any? { |key_string| key == key_string; }  }
       end
-      values = {}
-      ENV.keys.sort.each do |k,v|
-        values[k] = ENV[k] if should_include.call(k)
+      key_values = {}
+      ::ENV.keys.sort.each do |k,v|
+        key_values[k] = ENV[k] if should_include.call(k)
       end
       print ":: ENV = "
-      pretty values
+      puts format_output key_values
+    end
+
+    def assert_keys!(*required_keys)
+      raise ArgumentError, "Expected ENV-keys, but got: #{required_keys.inspect}" if required_keys.blank?
+      raise ArgumentError, "Expected ENV-keys, but got: #{required_keys.inspect}" unless required_keys.first.is_a?(String) || required_keys.first.is_a?(Symbol)
+
+      required_keys = required_keys.collect { |k| k.to_s }
+      missing_keys = required_keys - ::ENV.keys
+
+      if missing_keys.size == 0
+        true
+      else
+        raise MissingConfigKeyError, "Assertion failed, no such ENV-keys loaded: #{missing_keys}"
+      end
+    end
+
+    def assert_keys(*required_keys)
+      begin
+        self.assert_keys!(*required_keys)
+        true
+      rescue Error => e
+        print "[Yaml2env] WARN: Assertion failed, no such ENV-keys loaded: "
+        puts format_output required_keys
+        false
+      end
+    end
+
+    def assert_values!(key_values)
+      raise ArgumentError, "Expected hash, but got: #{key_values.inspect}" unless key_values.is_a?(Hash) && key_values.present?
+      raise ArgumentError, "Expected hash with string-regexp values, but got: #{key_values.inspect}" unless key_values.all? { |k, v| v.is_a?(Regexp) }
+
+      self.assert_keys! *key_values.keys
+
+      failed_assertions = {}
+
+      key_values.each do |k, v|
+        k = k.to_s
+        failed_assertions[k] = ::ENV[k] unless ::ENV[k] =~ v
+      end
+
+      if failed_assertions.keys.size == 0
+        true
+      else
+        raise InvalidConfigValueError, "Assertion failed, invalid values: #{failed_assertions}"
+      end
+    end
+
+    def assert_values(key_values)
+      begin
+        self.assert_values!(key_values)
+        true
+      rescue Error => e
+        print "[Yaml2env] WARN: Assertion failed, invalid values: "
+        puts format_output key_values
+        false
+      end
     end
 
     protected
+
+      # Work around helpers to make output specs pass on different Ruby version (ordered hash problem). Grrr...
+      def format_output(array_or_hash)
+        if array_or_hash.is_a?(Array)
+          array_or_hash.collect(&:to_s).sort.collect { |k| "#{k.inspect}" }.join(", ")
+        elsif array_or_hash.is_a?(Hash)
+          array_or_hash = ActiveSupport::HashWithIndifferentAccess.new(array_or_hash)
+          array_or_hash.keys.collect(&:to_s).sort.collect { |k| "#{k.inspect} => #{array_or_hash[k].inspect}" }.join(", ")
+        end
+      end
 
       def pretty(*args)
         begin

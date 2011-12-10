@@ -287,6 +287,22 @@ describe Yaml2env do
     end
   end
 
+  describe ".default_env?" do
+    it 'should be defined' do
+      Yaml2env.must_respond_to :default_env?
+    end
+
+    it 'should be true only if specified env equals default_env' do
+      Yaml2env.default_env = 'development'
+
+      Yaml2env.env = 'development'
+      Yaml2env.default_env?.must_equal true
+
+      Yaml2env.env = 'staging'
+      Yaml2env.default_env?.must_equal false
+    end
+  end
+
   describe ".configure" do
     it 'should be defined' do
       Yaml2env.must_respond_to :configure
@@ -352,6 +368,10 @@ describe Yaml2env do
   end
 
   describe ".detect_env!" do
+    before do
+      Yaml2env.default_env = nil
+    end
+
     it 'should be defined' do
       Yaml2env.must_respond_to :detect_env!
     end
@@ -621,7 +641,7 @@ describe Yaml2env do
       # args = ['fixtures/example.yml', {:API_KEY => 'api_key', :API_SECRET => 'api_secret'}]
       # lambda {
       #   Yaml2env.require *args
-      # }.must_output "[Yaml2env]: Already loaded: -- arguments: [\"fixtures/example.yml\", {:API_KEY=>\"api_key\", :API_SECRET=>\"api_secret\"}])\n"
+      # }.must_output "[Yaml2env] Already loaded: -- arguments: [\"fixtures/example.yml\", {:API_KEY=>\"api_key\", :API_SECRET=>\"api_secret\"}])\n"
     end
   end
 
@@ -771,7 +791,7 @@ describe Yaml2env do
       with_constants :ENV => {"API_SECRET" => "PRODUCTION_SECRET", "API_KEY" => "PRODUCTION_KEY"} do
         lambda {
           Yaml2env.log_values
-        }.must_output %{:: ENV = {\"API_KEY\"=>\"PRODUCTION_KEY\", \"API_SECRET\"=>\"PRODUCTION_SECRET\"}\n}
+        }.must_output %{:: ENV = \"API_KEY\" => \"PRODUCTION_KEY\", \"API_SECRET\" => \"PRODUCTION_SECRET\"\n}
       end
     end
 
@@ -779,11 +799,11 @@ describe Yaml2env do
       with_constants :ENV => {"API_SECRET" => "PRODUCTION_SECRET", "API_KEY" => "PRODUCTION_KEY"} do
         lambda {
           Yaml2env.log_values 'API_KEY'
-        }.must_output %{:: ENV = {\"API_KEY\"=>\"PRODUCTION_KEY\"}\n}
+        }.must_output %{:: ENV = \"API_KEY\" => \"PRODUCTION_KEY\"\n}
 
         lambda {
           Yaml2env.log_values 'API_KEY', 'API_SECRET', 'BOGUS'
-        }.must_output %{:: ENV = {\"API_KEY\"=>\"PRODUCTION_KEY\", \"API_SECRET\"=>\"PRODUCTION_SECRET\"}\n}
+        }.must_output %{:: ENV = \"API_KEY\" => \"PRODUCTION_KEY\", \"API_SECRET\" => \"PRODUCTION_SECRET\"\n}
       end
     end
 
@@ -791,12 +811,224 @@ describe Yaml2env do
       with_constants :ENV => {"API_SECRET" => "PRODUCTION_SECRET", "API_KEY" => "PRODUCTION_KEY"} do
         lambda {
           Yaml2env.log_values /API_KEY/
-        }.must_output %{:: ENV = {\"API_KEY\"=>\"PRODUCTION_KEY\"}\n}
+        }.must_output %{:: ENV = \"API_KEY\" => \"PRODUCTION_KEY\"\n}
 
         lambda {
           Yaml2env.log_values /API_KEY|API_SECRET|BOGUS/
-        }.must_output %{:: ENV = {\"API_KEY\"=>\"PRODUCTION_KEY\", \"API_SECRET\"=>\"PRODUCTION_SECRET\"}\n}
+        }.must_output %{:: ENV = \"API_KEY\" => \"PRODUCTION_KEY\", \"API_SECRET\" => \"PRODUCTION_SECRET\"\n}
       end
+    end
+  end
+
+  describe ".assert_keys!" do
+    before do
+      Yaml2env.root = File.dirname(__FILE__)
+      Yaml2env.env = 'development'
+      Yaml2env.logger = nil # ::Logger.new(::STDOUT)
+    end
+
+    it 'should be defined' do
+      Yaml2env.must_respond_to :assert_keys!
+    end
+
+    it 'should raise error if no arguments are specified' do
+      lambda {
+        Yaml2env.assert_keys!
+      }.must_raise Yaml2env::ArgumentError
+    end
+
+    it 'should raise error if specified keys are not loaded into ENV' do
+      Yaml2env.load 'fixtures/example.yml', {:API_KEY_6 => 'api_key', :API_SECRET_6 => 'api_secret'}
+
+      lambda {
+        Yaml2env.assert_keys! :BOGUS
+      }.must_raise Yaml2env::MissingConfigKeyError
+
+      lambda {
+        Yaml2env.assert_keys! :BOGUS, :BOGUS_2
+      }.must_raise Yaml2env::MissingConfigKeyError
+    end
+
+    it 'should not raise error if specified keys are loaded into ENV' do
+      Yaml2env.load 'fixtures/example.yml', {:API_KEY_6 => 'api_key', :API_SECRET_6 => 'api_secret'}
+
+      lambda {
+        Yaml2env.assert_keys! :API_KEY_6
+      }.must_be_silent
+
+      lambda {
+        Yaml2env.assert_keys! :API_KEY_6, :API_SECRET_6
+      }.must_be_silent
+    end
+  end
+
+  describe ".assert_keys" do
+    before do
+      Yaml2env.root = File.dirname(__FILE__)
+      Yaml2env.env = 'development'
+      Yaml2env.logger = nil # ::Logger.new(::STDOUT)
+    end
+
+    it 'should be defined' do
+      Yaml2env.must_respond_to :assert_keys
+    end
+
+    it 'should raise error if no arguments are specified' do
+      lambda {
+        Yaml2env.assert_keys
+      }.must_raise Yaml2env::ArgumentError
+    end
+
+    it 'should log warning if specified keys are not loaded into ENV' do
+      Yaml2env.load 'fixtures/example.yml', {:API_KEY_5 => 'api_key', :API_SECRET_5 => 'api_secret'}
+
+      lambda {
+        Yaml2env.assert_keys :BOGUS
+      }.must_output %{[Yaml2env] WARN: Assertion failed, no such ENV-keys loaded: \"BOGUS\"\n}
+
+      lambda {
+        Yaml2env.assert_keys :BOGUS, :BOGUS_2
+      }.must_output %{[Yaml2env] WARN: Assertion failed, no such ENV-keys loaded: \"BOGUS\", \"BOGUS_2\"\n}
+    end
+
+    it 'should not log warning if specified keys are loaded into ENV' do
+      Yaml2env.load 'fixtures/example.yml', {:API_KEY_5 => 'api_key', :API_SECRET_5 => 'api_secret'}
+
+      lambda {
+        Yaml2env.assert_keys :API_KEY_5
+      }.must_be_silent
+
+      lambda {
+        Yaml2env.assert_keys :API_KEY_5, :API_SECRET_5
+      }.must_be_silent
+    end
+  end
+
+  describe ".assert_values!" do
+    before do
+      Yaml2env.root = File.dirname(__FILE__)
+      Yaml2env.env = 'development'
+      Yaml2env.logger = nil # ::Logger.new(::STDOUT)
+    end
+
+    it 'should be defined' do
+      Yaml2env.must_respond_to :assert_values!
+    end
+
+    it 'should raise error if no hash is specified' do
+      lambda {
+        Yaml2env.assert_values!
+      }.must_raise ArgumentError
+
+      lambda {
+        Yaml2env.assert_values!({})
+      }.must_raise Yaml2env::ArgumentError
+
+      lambda {
+        Yaml2env.assert_values! :API_KEY_4
+      }.must_raise Yaml2env::ArgumentError
+    end
+
+    it 'should raise error if specified hash values are not regular expression values' do
+      lambda {
+        Yaml2env.assert_values! :API_KEY_4 => 'DEVELOPMENT_KEY'
+      }.must_raise Yaml2env::ArgumentError
+
+      lambda {
+        Yaml2env.assert_values! :API_KEY_4 => 'DEVELOPMENT_KEY', :API_SECRET_4 => /[A-Z]+/
+      }.must_raise Yaml2env::ArgumentError
+    end
+
+    it 'should raise error if specified keys with - based on the expression - valid values are not loaded into ENV' do
+      Yaml2env.load 'fixtures/example.yml', {:API_KEY_4 => 'api_key', :API_SECRET_4 => 'api_secret'}
+
+      lambda {
+        Yaml2env.assert_values! :API_KEY_4 => /[a-z]+/
+      }.must_raise Yaml2env::InvalidConfigValueError
+
+      lambda {
+        Yaml2env.assert_values! :API_KEY_4 => /[a-z]+/, :API_SECRET_4 => /[A-Z]+/
+      }.must_raise Yaml2env::InvalidConfigValueError
+
+      lambda {
+        Yaml2env.assert_values! :API_KEY_4 => /[a-z]+/, :API_SECRET_4 => /[a-z]+/
+      }.must_raise Yaml2env::InvalidConfigValueError
+    end
+
+    it 'should not raise error if specified keys with - based on the expression - valid values are loaded into ENV' do
+      Yaml2env.load 'fixtures/example.yml', {:API_KEY_4 => 'api_key', :API_SECRET_4 => 'api_secret'}
+
+      lambda {
+        Yaml2env.assert_values! :API_KEY_4 => /[A-Z]+/
+      }.must_be_silent
+
+      lambda {
+        Yaml2env.assert_values! :API_KEY_4 => /[A-Z]+/, :API_SECRET_4 => /[A-Z]+/
+      }.must_be_silent
+    end
+  end
+
+  describe ".assert_values" do
+    before do
+      Yaml2env.root = File.dirname(__FILE__)
+      Yaml2env.env = 'development'
+      Yaml2env.logger = nil # ::Logger.new(::STDOUT)
+    end
+
+    it 'should be defined' do
+      Yaml2env.must_respond_to :assert_values
+    end
+
+    it 'should raise error if no hash is specified' do
+      lambda {
+        Yaml2env.assert_values
+      }.must_raise ArgumentError
+
+      lambda {
+        Yaml2env.assert_values({})
+      }.must_raise Yaml2env::ArgumentError
+
+      lambda {
+        Yaml2env.assert_values :API_KEY_2
+      }.must_raise Yaml2env::ArgumentError
+    end
+
+    it 'should raise error if specified hash values are not regular expression values' do
+      lambda {
+        Yaml2env.assert_values :API_KEY_2 => 'DEVELOPMENT_KEY'
+      }.must_raise Yaml2env::ArgumentError
+
+      lambda {
+        Yaml2env.assert_values :API_KEY_2 => 'DEVELOPMENT_KEY', :API_SECRET_2 => /[A-Z]+/
+      }.must_raise Yaml2env::ArgumentError
+    end
+
+    it 'should log warning if specified keys with - based on the expression - valid values are not loaded into ENV' do
+      Yaml2env.load 'fixtures/example.yml', {:API_KEY_2 => 'api_key', :API_SECRET_2 => 'api_secret'}
+
+      lambda {
+        Yaml2env.assert_values :API_KEY_2 => /[a-z]+/
+      }.must_output %{[Yaml2env] WARN: Assertion failed, invalid values: \"API_KEY_2\" => /[a-z]+/\n}
+
+      lambda {
+        Yaml2env.assert_values :API_KEY_2 => /[a-z]+/, :API_SECRET_2 => /[A-Z]+/
+      }.must_output %{[Yaml2env] WARN: Assertion failed, invalid values: \"API_KEY_2\" => /[a-z]+/, \"API_SECRET_2\" => /[A-Z]+/\n}
+
+      lambda {
+        Yaml2env.assert_values :API_KEY_2 => /[a-z]+/, :API_SECRET_2 => /[a-z]+/
+      }.must_output %{[Yaml2env] WARN: Assertion failed, invalid values: \"API_KEY_2\" => /[a-z]+/, \"API_SECRET_2\" => /[a-z]+/\n}
+    end
+
+    it 'should not log warning if specified keys with - based on the expression - valid values are loaded into ENV' do
+      Yaml2env.load 'fixtures/example.yml', {:API_KEY_3 => 'api_key', :API_SECRET_3 => 'api_secret'}
+
+      lambda {
+        Yaml2env.assert_values :API_KEY_3 => /[A-Z]+/
+      }.must_be_silent
+
+      lambda {
+        Yaml2env.assert_values :API_KEY_3 => /[A-Z]+/, :API_SECRET_3 => /[A-Z]+/
+      }.must_be_silent
     end
   end
 

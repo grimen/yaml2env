@@ -1,8 +1,6 @@
 
 == NEXT
 
-- [feature]: Yaml2env.assert, Yaml2env.assert!
-
 - [doc]: Add some usage examples of the new helpers in README.
 
 - [release]: 0.2.0
