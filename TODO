@@ -1,9 +1,9 @@
 
 == NEXT
 
-- [doc]: Add some usage examples of the new helpers in README.
+- [feature]: Yaml2env.log_files => Array
 
-- [release]: 0.2.0
+- [enhancement]: Make use of 'awesome_print' - with fallback on 'pretty_print' - without breaking Ruby specs; "ordered hash keys" issue causes pain here so disabled it temporarily to get a green build.
 
 
 == WOULD-BE-NICE

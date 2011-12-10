@@ -22,13 +22,13 @@ Add to your @Gemfile@:
 
 h2. Usage
 
-To give this some context; this is how we use @Yaml2Env@ to initialize "Hoptoad":http://hoptoadapp.com:
+To give this some context; this is how we use @Yaml2env@ to initialize "Hoptoad":http://hoptoadapp.com:
 
 <pre>
-  Yaml2Env.load! 'config/hoptoad.yml', {'HOPTOAD_API_KEY' => 'api_key'}
+  Yaml2env.require! 'config/hoptoad.yml', {'HOPTOAD_API_KEY' => 'api_key'}
 
   # ...or if a warning note in the logs is enough:
-  #   Yaml2Env.load 'config/hoptoad.yml', {'HOPTOAD_API_KEY' => 'api_key'}
+  #   Yaml2env.require 'config/hoptoad.yml', {'HOPTOAD_API_KEY' => 'api_key'}
 
   if defined?(HoptoadNotifier)
     HoptoadNotifier.configure do |config|
@@ -56,36 +56,159 @@ To give this some context; this is how we use @Yaml2Env@ to initialize "Hoptoad"
 ...which will yield:
 
 <pre>
-  # Rails.env => 'development'
-  ENV['HOPTOAD_API_KEY'] => 'NONE'
+  # For: Rails.env => 'development'
+  ENV['HOPTOAD_API_KEY']
+    => 'NONE'
 
-  # Rails.env => 'staging'
-  ENV['HOPTOAD_API_KEY'] => '123abc'
+  # For: Rails.env => 'staging'
+  ENV['HOPTOAD_API_KEY']
+    => '123abc'
 
-  # Rails.env => 'production'
-  ENV['HOPTOAD_API_KEY'] => 'abc123'
+  # For: Rails.env => 'production'
+  ENV['HOPTOAD_API_KEY']
+    => 'abc123'
 
-  # Rails.env => 'test'
-  ENV['HOPTOAD_API_KEY'] => 'NONE'
+  # For: Rails.env => 'test'
+  ENV['HOPTOAD_API_KEY']
+    => 'NONE'
 
-  # Rails.env => 'other'
-  => "Failed to load required config for environment 'other': /Users/grimen/development/example.com/config/hoptoad.yml"
+  # For: Rails.env => 'other'
+    => STDOUT: "Failed to load required config for environment 'other': /Users/grimen/development/example.com/config/hoptoad.yml"
 </pre>
 
-h2. Helpers
+h2. API
 
-A few convenient helpers:
+Being lazy and just dropping a lot of examples here.
+
+*@Yaml2env.require@*
 
 <pre>
-  Yaml2Env.loaded? 'HOPTOAD_API_KEY'
-  => true
+  # Case: If config file exists with proper keys
+  Yaml2env.require 'config/hoptoad.yml', {'HOPTOAD_API_KEY' => 'api_key'}
+    => true
+  Yaml2env.require 'config/hoptoad.yml', {'HOPTOAD_API_KEY' => 'api_key'}
+    => false + STDOUT: (already loaded warning)
 
-  Yaml2Env.loaded? 'BAZOOKA'
-  => false
-
-  Yaml2Env.loaded? 'HOPTOAD_API_KEY', 'BAZOOKA'
-  => false
+  # Case: If config file don't exists, or it don't contain expected setting-key(s)
+  Yaml2env.require 'config/hoptoad2.yml', {'HOPTOAD_API_KEY' => 'api_key'}
+    => false + STDOUT: (invalid file or missing key warning)
 </pre>
+
+*@Yaml2env.require!@*
+
+See above: Same as @Yaml2env.require@ but raises error instead of log warning.
+
+*@Yaml2env.load@*
+
+<pre>
+  # Case: If config file exists with proper keys
+  Yaml2env.load 'config/hoptoad.yml', {'HOPTOAD_API_KEY' => 'api_key'}
+    => true
+
+  # Case: If config file don't exists, or it don't contain expected setting-key(s)
+  Yaml2env.load 'config/hoptoad.yml', {'HOPTOAD_API_KEY' => 'api_key'}
+    => STDOUT: (warning)
+</pre>
+
+*@Yaml2env.load!@*
+
+See above: Same as @Yaml2env.require@ but raises error instead of log warning.
+
+*@Yaml2env.assert_keys@*
+
+<pre>
+  Yaml2env.assert_keys 'HOPTOAD_API_KEY'
+    => true
+
+  Yaml2env.assert_keys 'BAZOOKA'
+    => false + STDOUT: (warning)
+</pre>
+
+*@Yaml2env.assert_keys!@*
+
+See above: Same as @Yaml2env.assert_keys@ but raises error instead of log warning.
+
+*@Yaml2env.assert_values@*
+
+<pre>
+  Yaml2env.assert_values 'HOPTOAD_API_KEY' => /[a-z0-9]+/
+    => true
+
+  Yaml2env.assert_values 'HOPTOAD_API_KEY' => /[0-9]+/
+    => false + STDOUT: (warning)
+</pre>
+
+*@Yaml2env.assert_values!@*
+
+See above: Same as @Yaml2env.assert_values@ but raises error instead of log warning.
+
+*@Yaml2env.log_root@*
+
+<pre>
+  Yaml2env.log_root
+    => STDOUT: :: Yaml2env.root = '/path/to/project/root'
+</pre>
+
+*@Yaml2env.log_env@*
+
+<pre>
+  Yaml2env.log_env
+    => STDOUT: :: Yaml2env.env = 'development' (default)
+</pre>
+
+*@Yaml2env.log_values@*
+
+<pre>
+  Yaml2env.log_values
+    => STDOUT: :: ENV = {'HOPTOAD_API_KEY' => 'api_key', 'RUBY_VERSION' => 'ruby-1.9.3-p0', ...}
+
+  Yaml2env.log_values 'HOPTOAD_API_KEY'
+    => STDOUT: :: ENV = {'HOPTOAD_API_KEY' => 'api_key'}
+
+  Yaml2env.log_values 'BAZOOKA'
+    => STDOUT: :: ENV = {}
+
+  Yaml2env.log_values /RACK|MERCHII/
+    => STDOUT: :: ENV = {'RACK_ENV' => 'api_key', 'MERCHII_ASSETS_DOMAIN' => 'assets.merchii.com'}
+</pre>
+
+*@Yaml2env.detect_root!@*
+
+<pre>
+  # For: Rack, Sinatra, Rails, or Yaml2env.default_env is set
+  Yaml2env.detect_root!
+    => Yaml2env.root = '/path/to/project/root'
+
+  # For: Failed detection
+  Yaml2env.detect_root!
+    => DetectionFailedError
+</pre>
+
+*@Yaml2env.detect_env!@*
+
+<pre>
+  # For: Rack, Sinatra, Rails, or Yaml2env.default_env is set
+  Yaml2env.detect_env!
+    => Yaml2env.env = ENV['RACK_ENV']  # ...example for Rack
+
+  # For: Failed detection
+  Yaml2env.detect_env!
+    => DetectionFailedError
+
+  # For: Default environment set
+  Yaml2env.default_env = 'development'
+  Yaml2env.detect_env!
+    => Yaml2env.env = 'development'
+</pre>
+
+*@Yaml2env.loaded@*
+
+<pre>
+  Yaml2env.loaded
+    => STDOUT: '/path/to/project/root/config/hoptoad.yml' => {'HOPTOAD_API_KEY' => 'abc123'}
+</pre>
+
+There are a few more, but these are the most useful ones.
 
 h2. Notes
 
