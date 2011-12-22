@@ -1,5 +1,6 @@
 require 'yaml'
 require 'logger'
+require 'pathname'
 require 'active_support/string_inquirer'
 require 'active_support/hash_with_indifferent_access'
 require 'active_support/ordered_hash'
@@ -195,7 +196,7 @@ module Yaml2env
       constant_names.all? { |cn| ::Yaml2env::LOADED_ENV.key?(cn.to_s) }
     end
 
-    def detect_root!
+    def detect_root!(*args)
       self.root ||= if ::ENV.key?('RACK_ROOT')
         ::ENV['RACK_ROOT']
       elsif defined?(::Rails)
@@ -203,8 +204,15 @@ module Yaml2env
       elsif defined?(::Sinatra::Application)
         ::Sinatra::Application.root
       else
-        raise DetectionFailedError, "Failed to auto-detect Yaml.root (config root). Specify root before loading any configs/initializers using Yaml2env, e.g. Yaml2env.root = '~/projects/my_app'."
+        self.detect_root_using_expression(*args)
       end
+
+      if self.root.nil?
+        raise DetectionFailedError,
+          "Failed to auto-detect Yaml2env.root (config root). Specify root before loading any configs/initializers using Yaml2env, e.g. Yaml2env.root = '~/projects/my_app'."
+      end
+
+      self.root
     end
 
     def detect_env!
@@ -217,8 +225,15 @@ module Yaml2env
       elsif self.default_env.present?
         self.default_env
       else
-        raise DetectionFailedError, "Failed to auto-detect Yaml2env.env (config environment). Specify environment before loading any configs/initializers using Yaml2env, e.g. Yaml2env.env = 'development'."
+        # nothing
       end
+
+      if self.env.nil?
+        raise DetectionFailedError,
+          "Failed to auto-detect Yaml2env.env (config environment). Specify environment before loading any configs/initializers using Yaml2env, e.g. Yaml2env.env = 'development'."
+      end
+
+      self.env
     end
 
     def logger?
@@ -368,6 +383,41 @@ module Yaml2env
       def load_config_for_env(config_file, env)
         config = self.load_config(config_file)
         config[env]
+      end
+
+      def detect_root_using_expression(*args)
+        unless args.all? { |arg| arg.is_a?(String) } || args.map { |arg| arg.is_a?(Regexp) }.size == 1
+          raise ::Yaml2env::ArgumentError, "Expects string, array of strings, or regular expression. Got: #{args.inspect}"
+        end
+
+        pattern =
+          if args.first.is_a?(Regexp)
+            args.first
+          else
+            # *["Gemfile", "config.ru"] => /^Gemfile|config\.ru$/
+            filenames_expression = args.compact.map { |filename| Regexp.escape(filename) }.join('|')
+            Regexp.new("^#{filenames_expression}$")
+          end
+
+        # NOTE: Not sure if this is "the way", but it seems to work. >:)
+        caller_file = caller[1].to_s.split(":").first # caller[0] = "../lib/yaml2env.rb", caller[1] = <the-origin-file-that-triggered-this-Yaml2env-call>, ...
+
+        current_dir =  File.expand_path(File.dirname(caller_file)) # FIXME: This only works for "ruby my_script.rb"
+        detected_root = nil
+
+        puts "[Yaml2env] INFO: Detection of Yaml2env.root starting in: #{current_dir}"
+
+        while detected_root.nil?
+          files_in_current_dir = Dir.entries(current_dir).reject { |filename| %[. ..].include?(filename) }.compact
+          files_in_current_dir.each do |filename|
+            if (filename =~ pattern)
+              puts "[Yaml2env] INFO: Detection successful: Yaml2env.root = #{current_dir} (match: #{filename.inspect} =~ #{pattern.inspect})"
+              return current_dir
+            end
+          end
+          return nil if current_dir.to_s =~ /\:?\/$/ # root-path? (e.g. "/", "C:/")
+          current_dir = Pathname.new(File.expand_path(File.join(current_dir, '..')))
+        end
       end
 
   end

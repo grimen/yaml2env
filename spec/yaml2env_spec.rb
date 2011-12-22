@@ -325,33 +325,39 @@ describe Yaml2env do
       Yaml2env.must_respond_to :detect_root!
     end
 
-    it "should detect environment for Rack_apps - 1st" do
+    it "should detect environment for Rack-apps - 1st" do
       rack!(true)
       rails!(true)
       sinatra!(true)
 
       Yaml2env.root = nil
-      Yaml2env.detect_root!
+      lambda {
+        Yaml2env.detect_root!
+      }.must_be_silent
       Yaml2env.root.to_s.must_equal '/home/grimen/development/rack_app'
     end
 
-    it "should detect environment for Rails_apps - 2nd" do
+    it "should detect environment for Rails-apps - 2nd" do
       rack!(false)
       rails!(true)
       sinatra!(true)
 
       Yaml2env.root = nil
-      Yaml2env.detect_root!
+      lambda {
+        Yaml2env.detect_root!
+      }.must_be_silent
       Yaml2env.root.to_s.must_equal '/home/grimen/development/rails_app'
     end
 
-    it "should detect environment for Sinatra_apps - 3rd" do
+    it "should detect environment for Sinatra-apps - 3rd" do
       rack!(false)
       rails!(false)
       sinatra!(true)
 
       Yaml2env.root = nil
-      Yaml2env.detect_root!
+      lambda {
+        Yaml2env.detect_root!
+      }.must_be_silent
       Yaml2env.root.to_s.must_equal '/home/grimen/development/sinatra_app'
     end
 
@@ -362,7 +368,216 @@ describe Yaml2env do
 
       Yaml2env.root = nil
       assert_raises Yaml2env::DetectionFailedError do
-        Yaml2env.detect_root!
+        lambda {
+          Yaml2env.detect_root!
+        }.must_be_silent
+      end
+    end
+
+    describe 'using file-pattern' do
+      describe "that don't match any file in parent directories" do
+        it "should detect root for Rack-apps - 1st" do
+          rack!(true)
+          rails!(true)
+          sinatra!(true)
+
+          Yaml2env.root = nil
+          lambda {
+            Yaml2env.detect_root!
+          }.must_be_silent
+          Yaml2env.root.to_s.must_equal '/home/grimen/development/rack_app'
+        end
+
+        it "should detect root for Rails-apps - 2nd" do
+          rack!(false)
+          rails!(true)
+          sinatra!(true)
+
+          Yaml2env.root = nil
+          lambda {
+            Yaml2env.detect_root!
+          }.must_be_silent
+          Yaml2env.root.to_s.must_equal '/home/grimen/development/rails_app'
+        end
+
+        it "should detect root for Sinatra-apps - 3rd" do
+          rack!(false)
+          rails!(false)
+          sinatra!(true)
+
+          Yaml2env.root = nil
+          lambda {
+            Yaml2env.detect_root!
+          }.must_be_silent
+          Yaml2env.root.to_s.must_equal '/home/grimen/development/sinatra_app'
+        end
+
+        it 'should complain if no root could be detected' do
+          rack!(false)
+          rails!(false)
+          sinatra!(false)
+
+          Yaml2env.root = nil
+          assert_raises Yaml2env::DetectionFailedError do
+            lambda {
+              Yaml2env.detect_root! 'Ponies'
+            }.must_be_silent
+          end
+
+          Yaml2env.root = nil
+          assert_raises Yaml2env::DetectionFailedError do
+            lambda {
+              Yaml2env.detect_root! 'Fraggles'
+            }.must_be_silent
+          end
+
+          Yaml2env.root = nil
+          assert_raises Yaml2env::DetectionFailedError do
+            lambda {
+              Yaml2env.detect_root! 'Ponies', 'Fraggles'
+            }.must_be_silent
+          end
+
+          Yaml2env.root = nil
+          assert_raises Yaml2env::DetectionFailedError do
+            lambda {
+              Yaml2env.detect_root! %r/Ponies|Fraggles/
+            }.must_be_silent
+          end
+
+          Yaml2env.root = nil
+          assert_raises Yaml2env::DetectionFailedError do
+            lambda {
+              Yaml2env.detect_root! %r/^Ponies.*/
+            }.must_be_silent
+          end
+        end
+
+        it "should raise error unless arguments is either: one ore many strings, or regular expression" do
+          rack!(false)
+          rails!(false)
+          sinatra!(false)
+
+          Yaml2env.root = nil
+          assert_raises Yaml2env::ArgumentError do
+            lambda {
+              Yaml2env.detect_root! %r/Ponies/, %r/Fraggles/
+            }.must_be_silent
+          end
+        end
+      end
+
+      describe "that match any file in parent directories" do
+        it "should detect root for Rack-apps - 1st" do
+          rack!(true)
+          rails!(true)
+          sinatra!(true)
+
+          Yaml2env.root = nil
+          lambda {
+            Yaml2env.detect_root!
+          }.must_be_silent
+          Yaml2env.root.to_s.must_equal '/home/grimen/development/rack_app'
+        end
+
+        it "should detect root for Rails-apps - 2nd" do
+          rack!(false)
+          rails!(true)
+          sinatra!(true)
+
+          Yaml2env.root = nil
+          lambda {
+            Yaml2env.detect_root!
+          }.must_be_silent
+          Yaml2env.root.to_s.must_equal '/home/grimen/development/rails_app'
+        end
+
+        it "should detect root for Sinatra-apps - 3rd" do
+          rack!(false)
+          rails!(false)
+          sinatra!(true)
+
+          Yaml2env.root = nil
+          lambda {
+            Yaml2env.detect_root!
+          }.must_be_silent
+          Yaml2env.root.to_s.must_equal '/home/grimen/development/sinatra_app'
+        end
+
+        it 'should detect root where the file was found' do
+          rack!(false)
+          rails!(false)
+          sinatra!(false)
+
+          spec_root = File.expand_path('..', __FILE__)
+
+          Yaml2env.root = nil
+          lambda {
+            Yaml2env.detect_root! 'Gemfile'
+          }.must_output <<-STDOUT
+[Yaml2env] INFO: Detection of Yaml2env.root starting in: /Users/grimen/Dropbox/Development/projects/yaml2env/spec
+[Yaml2env] INFO: Detection successful: Yaml2env.root = /Users/grimen/Dropbox/Development/projects/yaml2env (match: \"Gemfile\" =~ /^Gemfile$/)
+          STDOUT
+          Yaml2env.root.to_s.must_equal File.expand_path('..', spec_root)
+
+          Yaml2env.root = nil
+          lambda {
+            Yaml2env.detect_root! 'Rakefile'
+          }.must_output <<-STDOUT
+[Yaml2env] INFO: Detection of Yaml2env.root starting in: /Users/grimen/Dropbox/Development/projects/yaml2env/spec
+[Yaml2env] INFO: Detection successful: Yaml2env.root = /Users/grimen/Dropbox/Development/projects/yaml2env (match: \"Rakefile\" =~ /^Rakefile$/)
+          STDOUT
+          Yaml2env.root.to_s.must_equal File.expand_path('..', spec_root)
+
+          Yaml2env.root = nil
+          lambda {
+            Yaml2env.detect_root! 'Gemfile', 'Rakefile'
+          }.must_output <<-STDOUT
+[Yaml2env] INFO: Detection of Yaml2env.root starting in: /Users/grimen/Dropbox/Development/projects/yaml2env/spec
+[Yaml2env] INFO: Detection successful: Yaml2env.root = /Users/grimen/Dropbox/Development/projects/yaml2env (match: \"Gemfile\" =~ /^Gemfile|Rakefile$/)
+          STDOUT
+          Yaml2env.root.to_s.must_equal File.expand_path('..', spec_root)
+
+          Yaml2env.root = nil
+          lambda {
+            Yaml2env.detect_root! 'Gemfile', 'Ponies'
+          }.must_output <<-STDOUT
+[Yaml2env] INFO: Detection of Yaml2env.root starting in: /Users/grimen/Dropbox/Development/projects/yaml2env/spec
+[Yaml2env] INFO: Detection successful: Yaml2env.root = /Users/grimen/Dropbox/Development/projects/yaml2env (match: \"Gemfile\" =~ /^Gemfile|Ponies$/)
+          STDOUT
+          Yaml2env.root.to_s.must_equal File.expand_path('..', spec_root)
+
+          Yaml2env.root = nil
+          lambda {
+            Yaml2env.detect_root! %r/Gemfile|Ponies/
+          }.must_output <<-STDOUT
+[Yaml2env] INFO: Detection of Yaml2env.root starting in: /Users/grimen/Dropbox/Development/projects/yaml2env/spec
+[Yaml2env] INFO: Detection successful: Yaml2env.root = /Users/grimen/Dropbox/Development/projects/yaml2env (match: \"Gemfile\" =~ /Gemfile|Ponies/)
+          STDOUT
+          Yaml2env.root.to_s.must_equal File.expand_path('..', spec_root)
+
+          Yaml2env.root = nil
+          lambda {
+            Yaml2env.detect_root! %r/^Gemfile.*/
+          }.must_output <<-STDOUT
+[Yaml2env] INFO: Detection of Yaml2env.root starting in: /Users/grimen/Dropbox/Development/projects/yaml2env/spec
+[Yaml2env] INFO: Detection successful: Yaml2env.root = /Users/grimen/Dropbox/Development/projects/yaml2env (match: \"Gemfile\" =~ /^Gemfile.*/)
+          STDOUT
+          Yaml2env.root.to_s.must_equal File.expand_path('..', spec_root)
+        end
+
+        it "should raise error unless arguments is either: one ore many strings, or regular expression" do
+          rack!(false)
+          rails!(false)
+          sinatra!(false)
+
+          Yaml2env.root = nil
+          assert_raises Yaml2env::ArgumentError do
+            lambda {
+              Yaml2env.detect_root! %r/Gemfile/, %r/Rackfile/
+            }.must_be_silent
+          end
+        end
       end
     end
   end
@@ -376,7 +591,7 @@ describe Yaml2env do
       Yaml2env.must_respond_to :detect_env!
     end
 
-    it "should detect environment for Rack_apps - 1st" do
+    it "should detect environment for Rack-apps - 1st" do
       rack!(true)
       rails!(true)
       sinatra!(true)
@@ -386,7 +601,7 @@ describe Yaml2env do
       Yaml2env.env.must_equal 'rack_env'
     end
 
-    it "should detect environment for Rails_apps - 2nd" do
+    it "should detect environment for Rails-apps - 2nd" do
       rack!(false)
       rails!(true)
       sinatra!(true)
@@ -396,7 +611,7 @@ describe Yaml2env do
       Yaml2env.env.must_equal 'rails_env'
     end
 
-    it "should detect environment for Sinatra_apps - 3rd" do
+    it "should detect environment for Sinatra-apps - 3rd" do
       rack!(false)
       rails!(false)
       sinatra!(true)

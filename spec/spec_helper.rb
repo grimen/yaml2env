@@ -5,6 +5,7 @@ require 'minitest/spec'
 require 'minitest/pride'
 require 'minitest/mock'
 require 'mocha'
+require 'pathname'
 
 require 'yaml2env'
 
