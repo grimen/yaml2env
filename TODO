@@ -1,6 +1,8 @@
 
 == NEXT
 
+- [bug]: Make specs pass on Travis CI - green in development, but fails miserably in Travis (OS X vs. Linux?).
+
 - [feature]: Yaml2env.log_files => Array
 
 - [enhancement]: Make use of 'awesome_print' - with fallback on 'pretty_print' - without breaking Ruby specs; "ordered hash keys" issue causes pain here so disabled it temporarily to get a green build.
