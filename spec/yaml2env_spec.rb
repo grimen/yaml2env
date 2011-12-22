@@ -270,7 +270,7 @@ describe Yaml2env do
       Yaml2env.must_respond_to :default_env
     end
 
-    it 'should be default value for Yaml2env.env if no value is set' do
+    it 'should be Yaml2env.default_env if no value is set' do
       with_constants :ENV => {'RACK_ENV' => nil} do
         Yaml2env.default_env = 'development'
         Yaml2env.env = nil
@@ -283,6 +283,20 @@ describe Yaml2env do
         Yaml2env.env.must_equal 'staging'
 
         Yaml2env.default_env = nil
+      end
+    end
+
+    it 'should be :default value if specified as argument' do
+      with_constants :ENV => {'RACK_ENV' => nil} do
+        Yaml2env.default_env = nil
+        Yaml2env.env = nil
+        Yaml2env.detect_env! :default => 'development'
+        Yaml2env.env.must_equal 'development'
+
+        Yaml2env.default_env = nil
+        Yaml2env.env = 'staging'
+        Yaml2env.detect_env! :default => 'development'
+        Yaml2env.env.must_equal 'staging'
       end
     end
   end

@@ -215,7 +215,7 @@ module Yaml2env
       self.root
     end
 
-    def detect_env!
+    def detect_env!(*args)
       self.env ||= if ::ENV['RACK_ENV'].present?
         ::ENV['RACK_ENV']
       elsif defined?(::Rails)
@@ -225,7 +225,8 @@ module Yaml2env
       elsif self.default_env.present?
         self.default_env
       else
-        # nothing
+        options = ActiveSupport::HashWithIndifferentAccess.new(args.pop) if args.last.is_a?(Hash)
+        options && options[:default]
       end
 
       if self.env.nil?
