@@ -524,60 +524,61 @@ describe Yaml2env do
           sinatra!(false)
 
           spec_root = File.expand_path('..', __FILE__)
+          expected_root = File.expand_path('..', spec_root)
 
           Yaml2env.root = nil
           lambda {
             Yaml2env.detect_root! 'Gemfile'
           }.must_output <<-STDOUT
-[Yaml2env] INFO: Detection of Yaml2env.root starting in: /Users/grimen/Dropbox/Development/projects/yaml2env/spec
-[Yaml2env] INFO: Detection successful: Yaml2env.root = /Users/grimen/Dropbox/Development/projects/yaml2env (match: \"Gemfile\" =~ /^Gemfile$/)
+[Yaml2env] INFO: Detection of Yaml2env.root starting in: #{spec_root}
+[Yaml2env] INFO: Detection successful: Yaml2env.root = #{expected_root} (match: \"Gemfile\" =~ /^Gemfile$/)
           STDOUT
-          Yaml2env.root.to_s.must_equal File.expand_path('..', spec_root)
+          Yaml2env.root.to_s.must_equal expected_root
 
           Yaml2env.root = nil
           lambda {
             Yaml2env.detect_root! 'Rakefile'
           }.must_output <<-STDOUT
-[Yaml2env] INFO: Detection of Yaml2env.root starting in: /Users/grimen/Dropbox/Development/projects/yaml2env/spec
-[Yaml2env] INFO: Detection successful: Yaml2env.root = /Users/grimen/Dropbox/Development/projects/yaml2env (match: \"Rakefile\" =~ /^Rakefile$/)
+[Yaml2env] INFO: Detection of Yaml2env.root starting in: #{spec_root}
+[Yaml2env] INFO: Detection successful: Yaml2env.root = #{expected_root} (match: \"Rakefile\" =~ /^Rakefile$/)
           STDOUT
-          Yaml2env.root.to_s.must_equal File.expand_path('..', spec_root)
+          Yaml2env.root.to_s.must_equal expected_root
 
           Yaml2env.root = nil
           lambda {
             Yaml2env.detect_root! 'Gemfile', 'Rakefile'
           }.must_output <<-STDOUT
-[Yaml2env] INFO: Detection of Yaml2env.root starting in: /Users/grimen/Dropbox/Development/projects/yaml2env/spec
-[Yaml2env] INFO: Detection successful: Yaml2env.root = /Users/grimen/Dropbox/Development/projects/yaml2env (match: \"Gemfile\" =~ /^Gemfile|Rakefile$/)
+[Yaml2env] INFO: Detection of Yaml2env.root starting in: #{spec_root}
+[Yaml2env] INFO: Detection successful: Yaml2env.root = #{expected_root} (match: \"Gemfile\" =~ /^Gemfile|Rakefile$/)
           STDOUT
-          Yaml2env.root.to_s.must_equal File.expand_path('..', spec_root)
+          Yaml2env.root.to_s.must_equal expected_root
 
           Yaml2env.root = nil
           lambda {
             Yaml2env.detect_root! 'Gemfile', 'Ponies'
           }.must_output <<-STDOUT
-[Yaml2env] INFO: Detection of Yaml2env.root starting in: /Users/grimen/Dropbox/Development/projects/yaml2env/spec
-[Yaml2env] INFO: Detection successful: Yaml2env.root = /Users/grimen/Dropbox/Development/projects/yaml2env (match: \"Gemfile\" =~ /^Gemfile|Ponies$/)
+[Yaml2env] INFO: Detection of Yaml2env.root starting in: #{spec_root}
+[Yaml2env] INFO: Detection successful: Yaml2env.root = #{expected_root} (match: \"Gemfile\" =~ /^Gemfile|Ponies$/)
           STDOUT
-          Yaml2env.root.to_s.must_equal File.expand_path('..', spec_root)
+          Yaml2env.root.to_s.must_equal expected_root
 
           Yaml2env.root = nil
           lambda {
             Yaml2env.detect_root! %r/Gemfile|Ponies/
           }.must_output <<-STDOUT
-[Yaml2env] INFO: Detection of Yaml2env.root starting in: /Users/grimen/Dropbox/Development/projects/yaml2env/spec
-[Yaml2env] INFO: Detection successful: Yaml2env.root = /Users/grimen/Dropbox/Development/projects/yaml2env (match: \"Gemfile\" =~ /Gemfile|Ponies/)
+[Yaml2env] INFO: Detection of Yaml2env.root starting in: #{spec_root}
+[Yaml2env] INFO: Detection successful: Yaml2env.root = #{expected_root} (match: \"Gemfile\" =~ /Gemfile|Ponies/)
           STDOUT
-          Yaml2env.root.to_s.must_equal File.expand_path('..', spec_root)
+          Yaml2env.root.to_s.must_equal expected_root
 
           Yaml2env.root = nil
           lambda {
             Yaml2env.detect_root! %r/^Gemfile.*/
           }.must_output <<-STDOUT
-[Yaml2env] INFO: Detection of Yaml2env.root starting in: /Users/grimen/Dropbox/Development/projects/yaml2env/spec
-[Yaml2env] INFO: Detection successful: Yaml2env.root = /Users/grimen/Dropbox/Development/projects/yaml2env (match: \"Gemfile\" =~ /^Gemfile.*/)
+[Yaml2env] INFO: Detection of Yaml2env.root starting in: #{spec_root}
+[Yaml2env] INFO: Detection successful: Yaml2env.root = #{expected_root} (match: \"Gemfile\" =~ /^Gemfile.*/)
           STDOUT
-          Yaml2env.root.to_s.must_equal File.expand_path('..', spec_root)
+          Yaml2env.root.to_s.must_equal expected_root
         end
 
         it "should raise error unless arguments is either: one ore many strings, or regular expression" do
